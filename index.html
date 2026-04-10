@@ -96,7 +96,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   border-right:1px solid var(--border);padding:14px 10px;
   overflow-y:auto;display:none;flex-direction:column;gap:2px
 }
-#sidebar.open{display:none} /* Used to prevent flash on load "flex" */
+#sidebar.open{display:none} /* madechanges display:"flex" to none */
 .ng-lbl{font-size:8px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:#2d3f55;padding:12px 14px 4px}
 .ni{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:11px;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:all .18s;-webkit-tap-highlight-color:transparent}
 .ni svg{width:17px;height:17px;flex-shrink:0}
@@ -307,7 +307,8 @@ input[type=time].inp::-webkit-calendar-picker-indicator{filter:invert(.55)}
 <div id="login-scr" style="display:none;position:fixed;inset:0;z-index:100;background:var(--bg);align-items:center;justify-content:center;padding:20px;background-image:radial-gradient(ellipse 80% 60% at 30% 25%,rgba(245,158,11,.09) 0,transparent 65%)">
   <div class="card scale-in" style="padding:28px 22px;width:100%;max-width:380px;border-color:rgba(245,158,11,.2)">
     <div style="text-align:center;margin-bottom:22px">
-      <div class="brand" style="font-size:clamp(1.7rem,7vw,2.2rem);font-weight:900;text-transform:uppercase;letter-spacing:-.02em">SUNRISE<span style="color:var(--gold)">REALTY</span></div>
+      <!-- madechanges font wieght 900 to 700 -->
+      <div class="brand" style="font-size:clamp(1.7rem,7vw,2.2rem);font-weight:700;text-transform:uppercase;letter-spacing:-.02em">SUNRISE<span style="color:var(--gold)">REALTY</span></div>
       <div style="font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.14em;margin-top:5px">Helping You Find Your Dream Home</div>
     </div>
     <div style="display:flex;flex-direction:column;gap:12px">
@@ -333,12 +334,14 @@ input[type=time].inp::-webkit-calendar-picker-indicator{filter:invert(.55)}
     </div>
   </div>
   <div class="nav-right">
-    <button id="refresh-btn" onclick="manualRefresh()" title="Refresh">
+    <!-- madechanges added style style="display: none; -->
+    <button id="refresh-btn" onclick="manualRefresh()" title="Refresh" style="display: none;">
       <i data-lucide="refresh-cw"></i>
     </button>
     <button id="prof-btn" onclick="toggleDrawer()">
       <div class="p-av" id="p-av">U</div>
-      <span id="p-name">User</span>
+      <!-- madechanges p-name display none to inline-block -->
+      <span id="p-name" style="display: none;">User</span>
     </button>
   </div>
 </nav>
