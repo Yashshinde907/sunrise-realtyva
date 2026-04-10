@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<meta name="theme-color" content="#f59e0b"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="description" content="Sunrise Realty — Team Dashboard & Lead Tracker"/>
+<title>Sunrise Realty</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<link rel="icon" href="icon-192.png"/>
+<!-- System fonts: San Francisco on iOS, Roboto on Android -->
+<style>
+:root {
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-brand: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Roboto', sans-serif;
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600;800&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+/* ── BASE ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#f59e0b;--goldb:rgba(245,158,11,.12);--golds:rgba(245,158,11,.35);
+  --grn:#10b981;--grnb:rgba(16,185,129,.12);
+  --red:#ef4444;--redb:rgba(239,68,68,.1);
+  --blue:#3b82f6;--blueb:rgba(59,130,246,.1);
+  --bg:#020617;--surf:rgba(12,18,40,.9);--border:rgba(255,255,255,.07);
+  --text:#f1f5f9;--muted:#64748b;
+  --nav:58px;--tab:62px;--side:220px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+  --page-pad:16px;
+  --radius:18px;--radius-sm:12px;
+}
+html{font-size:16px;-webkit-text-size-adjust:100%;height:100%}
+body{
+  font-family:'Lexend',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100dvh;
+  overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 70% 45% at 0% 0%,rgba(245,158,11,.09) 0,transparent 60%),
+  radial-gradient(ellipse 50% 40% at 100% 95%,rgba(16,185,129,.05) 0,transparent 55%)}
+.brand{font-family:'Syne',-apple-system,BlinkMacSystemFont,sans-serif}
+
+/* ── LOADER ── */
+#loader{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;transition:opacity .4s .1s}
+#loader.out{opacity:0;pointer-events:none}
+.ld-logo{font-size:clamp(1.8rem,6vw,2.4rem);font-weight:900;text-transform:uppercase;letter-spacing:-.02em}
+.ld-ring{width:50px;height:50px;border:3px solid rgba(245,158,11,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .75s linear infinite}
+.ld-dots{display:flex;gap:6px}
+.ld-dots i{width:7px;height:7px;border-radius:50%;background:var(--gold);animation:dotpop 1.2s ease-in-out infinite}
+.ld-dots i:nth-child(2){animation-delay:.2s}
+.ld-dots i:nth-child(3){animation-delay:.4s}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes dotpop{0%,80%,100%{transform:scale(.35);opacity:.3}40%{transform:scale(1);opacity:1}}
+
+/* ── NAV ── */
+#nav{
+  position:sticky;top:0;z-index:60;height:var(--nav);
+  background:rgba(2,6,23,.96);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 var(--page-pad);gap:10px;
+  padding-top:var(--safe-t);
+}
+.brand-area{display:flex;flex-direction:column;justify-content:center;min-width:0}
+.brand-name{font-size:clamp(1rem,4vw,1.25rem);font-weight:900;text-transform:uppercase;letter-spacing:-.02em;line-height:1.1;white-space:nowrap}
+.sync-bar{display:flex;align-items:center;gap:5px;margin-top:2px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--grn);flex-shrink:0;animation:livepulse 2s infinite}
+@keyframes livepulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+#sync-txt{font-size:8px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+.nav-right{display:flex;align-items:center;gap:7px;flex-shrink:0}
+/* Profile button */
+#prof-btn{display:flex;align-items:center;gap:7px;padding:5px 10px 5px 5px;border-radius:50px;border:1px solid rgba(245,158,11,.25);background:var(--goldb);cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+#prof-btn:active{transform:scale(.95)}
+.p-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#000;flex-shrink:0;text-transform:uppercase}
+#prof-name{font-size:10.5px;font-weight:800;color:var(--gold);text-transform:uppercase;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Refresh button */
+#refresh-btn{padding:8px;border-radius:11px;border:1px solid rgba(245,158,11,.25);background:var(--goldb);cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:all .2s}
+#refresh-btn:active{transform:scale(.9)}
+#refresh-btn svg{width:16px;height:16px;color:var(--gold);transition:transform .6s}
+#refresh-btn.spinning svg{animation:spin .6s linear infinite}
+
+/* ── SIDEBAR (desktop ≥768px) ── */
+#sidebar{
+  position:fixed;top:var(--nav);left:0;bottom:0;z-index:55;
+  width:var(--side);background:rgba(2,6,23,.98);backdrop-filter:blur(24px);
+  border-right:1px solid var(--border);padding:14px 10px;
+  overflow-y:auto;display:none;flex-direction:column;gap:2px
+}
+#sidebar.open{display:flex}
+.ng-lbl{font-size:8px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:#2d3f55;padding:12px 14px 4px}
+.ni{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:11px;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:all .18s;-webkit-tap-highlight-color:transparent}
+.ni svg{width:17px;height:17px;flex-shrink:0}
+.ni:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.ni.on{background:var(--goldb);color:var(--gold);border:1px solid rgba(245,158,11,.2)}
+
+/* ── BOTTOM TAB BAR (mobile <768px) ── */
+#tab-bar{
+  display:none;position:fixed;bottom:0;left:0;right:0;z-index:60;
+  height:calc(var(--tab) + var(--safe-b));
+  background:rgba(2,6,23,.98);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border-top:1px solid var(--border);
+  align-items:flex-start;justify-content:space-around;
+  padding:7px 0 0;padding-bottom:max(var(--safe-b),8px)
+}
+#tab-bar.on{display:flex}
+.tb{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  background:none;border:none;cursor:pointer;color:var(--muted);
+  font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;
+  padding:2px;transition:color .2s;min-width:0;
+  -webkit-tap-highlight-color:transparent;position:relative
+}
+.tb svg{width:21px;height:21px}
+.tb span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.tb.on{color:var(--gold)}
+.tb-badge{position:absolute;top:0;right:calc(50% - 16px);width:16px;height:16px;border-radius:50%;background:var(--red);color:#fff;font-size:8px;font-weight:900;display:flex;align-items:center;justify-content:center;display:none}
+.tb-badge.show{display:flex}
+
+/* ── MAIN ── */
+#main{
+  padding:var(--page-pad) var(--page-pad) calc(var(--tab) + var(--safe-b) + 20px);
+  max-width:1050px;margin:0 auto;position:relative;z-index:1
+}
+
+/* ── SECTIONS ── */
+.sec{display:none}.sec.on{display:flex;flex-direction:column;gap:16px}
+
+/* ── CARD ── */
+.card{background:var(--surf);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+
+/* ── PILLS ── */
+.pills{display:flex;gap:7px;overflow-x:auto;padding-bottom:3px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.pills::-webkit-scrollbar{display:none}
+.pill{flex-shrink:0;padding:8px 15px;border-radius:50px;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;border:1px solid var(--border);color:var(--muted);background:transparent;cursor:pointer;transition:all .22s;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.pill.on{background:var(--gold);color:#000;border-color:var(--gold);box-shadow:0 4px 14px -4px var(--golds)}
+
+/* ── GRIDS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.leads-grid{display:grid;grid-template-columns:1fr;gap:11px}
+@media(min-width:560px){.kpi-grid{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:580px){.leads-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:860px){.leads-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:380px){.g2{grid-template-columns:1fr}.g3{grid-template-columns:1fr 1fr}}
+
+/* ── KPI ── */
+.kpi{padding:14px 16px;border-radius:16px;background:var(--surf);border:1px solid var(--border)}
+.kpi-v{font-size:1.8rem;font-weight:900;line-height:1;margin:4px 0 2px}
+
+/* ── FORM ── */
+.lbl{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);display:block;margin-bottom:5px}
+.inp{width:100%;padding:12px 15px;border-radius:var(--radius-sm);background:rgba(10,15,35,.92);border:1px solid var(--border);color:var(--text);font-family:'Lexend',system-ui,sans-serif;font-size:14px;outline:none;transition:border-color .2s;-webkit-appearance:none;min-height:44px}
+.inp:focus{border-color:var(--gold)}
+select.inp{cursor:pointer;padding-right:32px}
+select.inp option{background:#0a0f23}
+textarea.inp{resize:vertical;min-height:80px}
+input[type=date].inp::-webkit-calendar-picker-indicator{filter:invert(.55)}
+input[type=time].inp::-webkit-calendar-picker-indicator{filter:invert(.55)}
+
+/* ── BUTTONS ── */
+.btn{width:100%;padding:14px 16px;border-radius:var(--radius-sm);border:none;font-family:'Lexend',system-ui,sans-serif;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.09em;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:7px;min-height:48px;-webkit-tap-highlight-color:transparent;position:relative;overflow:hidden}
+/* Ripple effect */
+.btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.12);border-radius:inherit;transform:scale(0);transition:transform .3s}
+.btn:active::after{transform:scale(1)}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn-gold{background:var(--gold);color:#000;box-shadow:0 6px 20px -6px var(--golds)}
+.btn-grn{background:var(--grn);color:#fff;box-shadow:0 6px 20px -6px rgba(16,185,129,.3)}
+.btn-red{background:var(--redb);color:var(--red);border:1px solid rgba(239,68,68,.25)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-blue{background:var(--blueb);color:var(--blue);border:1px solid rgba(59,130,246,.25)}
+.btn-sm{width:auto;padding:8px 14px;font-size:10.5px;border-radius:9px;min-height:36px}
+.btn-icon{width:36px;height:36px;padding:0;border-radius:9px;min-height:36px}
+
+/* ── TABLE ── */
+.tbl-w{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius)}
+.tbl-w table{width:100%;border-collapse:collapse;min-width:380px}
+.tbl-w thead tr{background:rgba(255,255,255,.03);border-bottom:1px solid var(--border)}
+.tbl-w th{padding:11px 12px;font-size:8.5px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);text-align:left;white-space:nowrap}
+.tbl-w th.c,.tbl-w td.c{text-align:center}
+.tbl-w tbody tr{border-bottom:1px solid rgba(255,255,255,.03);transition:background .15s}
+.tbl-w tbody tr:hover{background:rgba(255,255,255,.025)}
+.tbl-w td{padding:10px 12px;font-size:11px;font-weight:700;white-space:nowrap}
+
+/* ── PROGRESS ── */
+.prog{height:5px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:7px}
+.prog-f{height:100%;border-radius:99px;background:var(--gold);transition:width .9s cubic-bezier(.4,0,.2,1)}
+
+/* ── BADGE ── */
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:6px;font-size:8.5px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+.b-gold{background:var(--goldb);color:var(--gold);border:1px solid rgba(245,158,11,.2)}
+.b-grn{background:var(--grnb);color:var(--grn);border:1px solid rgba(16,185,129,.2)}
+.b-red{background:var(--redb);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.b-blue{background:var(--blueb);color:var(--blue);border:1px solid rgba(59,130,246,.2)}
+.b-gray{background:rgba(100,116,139,.1);color:var(--muted);border:1px solid rgba(100,116,139,.2)}
+
+/* ── LEAD CARD ── */
+.lead-card{padding:15px;display:flex;flex-direction:column;gap:10px;border-left:3px solid rgba(16,185,129,.45);width:100%;min-width:0;box-sizing:border-box}
+.lead-card *{max-width:100%;word-break:break-word}
+.lead-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+
+/* ── CLIENT ROW ── */
+.cl-row{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:13px;padding:13px;display:flex;flex-direction:column;gap:10px;animation:fadeUp .25s ease-out}
+
+/* ── PROFILE DRAWER ── */
+#prof-drawer{position:fixed;top:var(--nav);right:0;z-index:70;width:min(300px,90vw);background:#0d1428;border:1px solid var(--border);border-radius:0 0 0 18px;transform:translateX(110%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:-8px 8px 40px rgba(0,0,0,.5);overflow-y:auto;max-height:calc(100dvh - var(--nav))}
+#prof-drawer.open{transform:translateX(0)}
+.draw-in{padding:18px}
+
+/* ── MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);align-items:center;justify-content:center;padding:16px}
+.modal-bg.open{display:flex}
+.modal{width:100%;max-width:460px;max-height:90dvh;overflow-y:auto;border-radius:20px;background:#0d1428;border:1px solid var(--border)}
+.modal-body{padding:20px;display:flex;flex-direction:column;gap:13px}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;
+  bottom:calc(var(--tab) + var(--safe-b) + 14px);
+  left:50%;transform:translateX(-50%) translateY(8px);
+  background:#1a2540;border:1px solid var(--border);border-radius:50px;
+  padding:10px 20px;font-size:11.5px;font-weight:700;color:var(--text);
+  z-index:9999;opacity:0;pointer-events:none;transition:all .25s;
+  white-space:nowrap;max-width:88vw;text-align:center
+}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.s{border-color:var(--grn);color:var(--grn)}
+#toast.e{border-color:var(--red);color:var(--red)}
+#toast.w{border-color:var(--gold);color:var(--gold)}
+
+/* ── PULL TO REFRESH ── */
+#ptr{position:fixed;top:var(--nav);left:50%;transform:translateX(-50%) translateY(-60px);z-index:58;background:var(--goldb);border:1px solid rgba(245,158,11,.25);border-radius:50px;padding:8px 16px;display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;color:var(--gold);transition:transform .25s;pointer-events:none}
+#ptr.show{transform:translateX(-50%) translateY(8px)}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes scaleIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.fade-up{animation:fadeUp .26s ease-out both}
+.scale-in{animation:scaleIn .22s ease-out both}
+.slide-in{animation:slideIn .25s ease-out both}
+
+/* ── SEARCH ── */
+.srch{position:relative}
+.srch svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--muted);pointer-events:none}
+.srch .inp{padding-left:40px}
+
+/* ── RANK BADGES ── */
+.r1{background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;padding:2px 8px;border-radius:6px;font-size:9px;font-weight:900}
+.r2{background:rgba(148,163,184,.2);color:#94a3b8;padding:2px 8px;border-radius:6px;font-size:9px;font-weight:900}
+.r3{background:rgba(180,83,9,.2);color:#c2410c;padding:2px 8px;border-radius:6px;font-size:9px;font-weight:900}
+
+/* ── SECTION UTILS ── */
+.sec-hd{font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+.row{display:flex;align-items:center;gap:8px}
+.row-sb{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.divider{height:1px;background:var(--border)}
+.empty{text-align:center;padding:36px 16px;color:var(--muted);font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.1em}
+
+/* ── FEEDBACK HISTORY ── */
+.fb-hist{display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto}
+.fb-item{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:11.5px;color:#cbd5e1;line-height:1.5}
+.fb-item .fb-ts{font-size:8.5px;color:var(--muted);margin-top:4px;font-weight:700;text-transform:uppercase}
+
+/* ── DESKTOP LAYOUT ── */
+@media(min-width:768px){
+  #sidebar{display:flex}
+  #tab-bar{display:none!important}
+  #nav{padding-left:calc(var(--side) + var(--page-pad))}
+  #main{margin-left:var(--side);padding:20px 24px calc(24px)}
+  #toast{bottom:20px}
+  #ptr{top:calc(var(--nav) + 4px)}
+}
+@media(min-width:1024px){
+  :root{--page-pad:28px}
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:99px}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="brand ld-logo">SUNRISE<span style="color:var(--gold)">REALTY</span></div>
+  <div class="ld-ring"></div>
+  <div class="ld-dots"><i></i><i></i><i></i></div>
+</div>
+
+<!-- PULL TO REFRESH INDICATOR -->
+<div id="ptr"><i data-lucide="refresh-cw" style="width:14px;height:14px;animation:spin .6s linear infinite"></i>Syncing…</div>
+
+<!-- ════════ LOGIN ════════ -->
+<div id="login-scr" style="display:none;position:fixed;inset:0;z-index:100;background:var(--bg);align-items:center;justify-content:center;padding:20px;background-image:radial-gradient(ellipse 80% 60% at 30% 25%,rgba(245,158,11,.09) 0,transparent 65%)">
+  <div class="card scale-in" style="padding:28px 22px;width:100%;max-width:380px;border-color:rgba(245,158,11,.2)">
+    <div style="text-align:center;margin-bottom:22px">
+      <div class="brand" style="font-size:clamp(1.7rem,7vw,2.2rem);font-weight:900;text-transform:uppercase;letter-spacing:-.02em">SUNRISE<span style="color:var(--gold)">REALTY</span></div>
+      <div style="font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.14em;margin-top:5px">Helping You Find Your Dream Home</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div><label class="lbl">Username</label><input id="un" type="text" class="inp" placeholder="Enter username" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div><label class="lbl">Password</label><input id="pw" type="password" class="inp" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <button id="login-btn" class="btn btn-gold" onclick="doLogin()">Access Dashboard</button>
+      <div id="login-err" style="display:none;color:#f87171;font-size:10px;font-weight:800;text-transform:uppercase;text-align:center">⚠ Invalid credentials</div>
+      <div id="login-lock" style="display:none;color:var(--gold);font-size:10px;font-weight:800;text-transform:uppercase;text-align:center">🔒 Account locked. Contact admin.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ APP ════════ -->
+<div id="app" style="display:none">
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="brand-area">
+    <div class="brand brand-name">SUNRISE<span style="color:var(--gold)">REALTY</span></div>
+    <div class="sync-bar">
+      <span class="live-dot"></span>
+      <span id="sync-txt">System Live</span>
+    </div>
+  </div>
+  <div class="nav-right">
+    <button id="refresh-btn" onclick="manualRefresh()" title="Refresh">
+      <i data-lucide="refresh-cw"></i>
+    </button>
+    <button id="prof-btn" onclick="toggleDrawer()">
+      <div class="p-av" id="p-av">U</div>
+      <span id="p-name">User</span>
+    </button>
+  </div>
+</nav>
+
+<!-- SIDEBAR (desktop) -->
+<nav id="sidebar">
+  <div class="ng-lbl">Main</div>
+  <button class="ni on" id="sn-dash"     onclick="goSec('dash')"><i data-lucide="layout-dashboard"></i>Dashboard</button>
+  <button class="ni"    id="sn-daily"    onclick="goSec('daily')"><i data-lucide="clipboard-pen"></i>Daily Report</button>
+  <button class="ni"    id="sn-lead"     onclick="goSec('lead')"><i data-lucide="star"></i>Add Lead</button>
+  <div class="ng-lbl admin-el">Admin</div>
+  <button class="ni admin-el" id="sn-users"    onclick="goSec('users')"><i data-lucide="users"></i>User Mgmt</button>
+  <button class="ni admin-el" id="sn-teams"    onclick="goSec('teams')"><i data-lucide="layers"></i>Teams</button>
+  <button class="ni admin-el" id="sn-audit"    onclick="goSec('audit')"><i data-lucide="shield-check"></i>Audit Log</button>
+  <button class="ni admin-el" id="sn-backup"   onclick="goSec('backup')"><i data-lucide="database-backup"></i>Backup</button>
+  <button class="ni admin-el" id="sn-settings" onclick="goSec('settings')"><i data-lucide="settings-2"></i>Settings</button>
+</nav>
+
+<!-- BOTTOM TABS (mobile) -->
+<div id="tab-bar">
+  <button class="tb on" id="tb-dash"     onclick="goSec('dash')"><i data-lucide="layout-dashboard"></i><span>Home</span></button>
+  <button class="tb"    id="tb-daily"    onclick="goSec('daily')"><i data-lucide="clipboard-pen"></i><span>Daily</span></button>
+  <button class="tb"    id="tb-lead"     onclick="goSec('lead')"><i data-lucide="star"></i><span>Lead</span></button>
+  <button class="tb admin-el" id="tb-users"    onclick="goSec('users')"><i data-lucide="users"></i><span>Users</span></button>
+  <button class="tb admin-el" id="tb-more"     onclick="goSec('teams')"><i data-lucide="layers"></i><span>Teams</span></button>
+  <button class="tb admin-el" id="tb-audit"    onclick="goSec('audit')"><i data-lucide="shield-check"></i><span>Audit</span></button>
+</div>
+
+<!-- PROFILE DRAWER -->
+<div id="prof-drawer">
+  <div class="draw-in" style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+      <div class="p-av" id="dr-av" style="width:44px;height:44px;font-size:16px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-weight:900;color:#000;text-transform:uppercase">U</div>
+      <div>
+        <div id="dr-name" style="font-weight:900;color:#fff;font-size:14px"></div>
+        <div id="dr-uid" style="font-size:8px;color:var(--muted);font-weight:800;letter-spacing:.1em;margin-top:1px"></div>
+        <div id="dr-role" style="font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:800;letter-spacing:.07em;margin-top:1px"></div>
+        <div id="dr-desig" style="font-size:9px;color:var(--gold);text-transform:uppercase;font-weight:800;letter-spacing:.07em;margin-top:1px"></div>
+      </div>
+    </div>
+    <div id="dr-info" style="display:flex;flex-direction:column;gap:7px"></div>
+    <button class="btn btn-red" onclick="doLogout()"><i data-lucide="log-out" style="width:15px;height:15px"></i>Logout</button>
+  </div>
+</div>
+<div id="drawer-bg" onclick="closeDrawer()" style="display:none;position:fixed;inset:0;z-index:69"></div>
+
+<!-- MAIN -->
+<main id="main">
+
+<!-- ══ DASHBOARD ══ -->
+<div id="sec-dash" class="sec on">
+
+  <!-- Time filter + export -->
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div class="row-sb">
+      <div class="pills" style="flex:1;min-width:0">
+        <button class="pill on" id="fp-today"     onclick="setF('today')">Today</button>
+        <button class="pill"    id="fp-yesterday" onclick="setF('yesterday')">Yesterday</button>
+        <button class="pill"    id="fp-week"      onclick="setF('week')">Week</button>
+        <button class="pill"    id="fp-month"     onclick="setF('month')">Month</button>
+        <button class="pill"    id="fp-year"      onclick="setF('year')">Year</button>
+        <button class="pill"    id="fp-range-btn" onclick="toggleRng()" style="border-color:rgba(245,158,11,.3);color:var(--gold)">Range＋</button>
+        <button class="pill"    id="fp-all"       onclick="setF('all')">All</button>
+      </div>
+      <div class="row admin-el" style="gap:5px;flex-shrink:0">
+        <button onclick="exportXLSX()" class="btn btn-blue btn-sm" title="Export Excel"><i data-lucide="file-spreadsheet" style="width:13px;height:13px"></i><span style="display:none" class="xl-show">XLS</span></button>
+        <button onclick="exportPDF()" class="btn btn-ghost btn-sm" title="Export PDF"><i data-lucide="file-text" style="width:13px;height:13px"></i><span style="display:none" class="xl-show">PDF</span></button>
+      </div>
+    </div>
+    <div id="rng-box" class="card" style="display:none;padding:13px;border-color:rgba(245,158,11,.2)">
+      <div class="g2">
+        <div><label class="lbl">From</label><input type="date" id="d-from" class="inp" onchange="setF('range')"/></div>
+        <div><label class="lbl">To</label><input type="date" id="d-to" class="inp" onchange="setF('range')"/></div>
+      </div>
+    </div>
+    <!-- Admin sub-filters -->
+    <div id="sub-filters" style="display:none;flex-direction:column;gap:8px">
+      <div class="pills">
+        <button class="pill on" id="df-all"       onclick="setDF('all')">All Roles</button>
+        <button class="pill"    id="df-Sales"      onclick="setDF('Sales')">Sales</button>
+        <button class="pill"    id="df-Telecaller" onclick="setDF('Telecaller')">Telecaller</button>
+        <button class="pill"    id="df-Digital"    onclick="setDF('Digital')">Digital</button>
+      </div>
+      <div class="pills" id="team-pills"></div>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi" style="border-left:3px solid var(--gold)">
+      <div class="lbl">📞 Calls</div><div class="kpi-v" id="s-calls">0</div>
+      <div style="font-size:9.5px;color:var(--muted)" id="s-conn">0 connected</div>
+    </div>
+    <div class="kpi" style="border-left:3px solid var(--blue)">
+      <div class="lbl">🏠 Visits</div><div class="kpi-v" id="s-visits">0</div>
+    </div>
+    <div class="kpi" style="border-left:3px solid var(--grn)">
+      <div class="lbl">📋 Bookings</div>
+      <div class="kpi-v" id="s-books" style="color:var(--grn)">0</div>
+      <div class="prog"><div class="prog-f" id="book-prog" style="width:0%"></div></div>
+      <div style="font-size:8.5px;color:var(--muted);margin-top:3px" id="book-tgt">of target</div>
+    </div>
+    <div class="kpi" style="background:var(--goldb);border-color:rgba(245,158,11,.18)">
+      <div class="lbl" style="color:var(--gold)">⭐ Positive</div><div class="kpi-v" id="s-pos">0</div>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="srch"><i data-lucide="search"></i><input type="text" id="srch" class="inp" placeholder="Search agent or client…" oninput="renderDash()"/></div>
+
+  <!-- Performance Table (admin) -->
+  <div id="perf-sec" style="display:none;flex-direction:column;gap:10px">
+    <div class="row"><i data-lucide="trophy" style="width:14px;height:14px;color:var(--gold)"></i><span class="sec-hd">Team Performance — Ranked</span></div>
+    <div class="tbl-w card">
+      <table><thead><tr>
+        <th>#</th><th>Agent</th><th>Desig</th><th>Team</th>
+        <th class="c">Calls</th><th class="c">Conn</th><th class="c">Visits</th><th class="c">Books</th><th class="c">+ve</th>
+      </tr></thead><tbody id="perf-body"></tbody></table>
+    </div>
+  </div>
+
+  <!-- Chart (admin) -->
+  <div id="chart-sec" style="display:none;flex-direction:column;gap:10px">
+    <div class="row"><i data-lucide="bar-chart-2" style="width:14px;height:14px;color:var(--gold)"></i><span class="sec-hd">Performance Chart</span></div>
+    <div class="card" style="padding:14px"><canvas id="perf-chart" height="220"></canvas></div>
+  </div>
+
+  <!-- Success Feed -->
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div class="row"><i data-lucide="award" style="width:14px;height:14px;color:var(--gold)"></i><span class="sec-hd">Success Feed</span></div>
+    <div class="leads-grid" id="leads-wrap"></div>
+    <div id="no-leads" class="empty" style="display:none">No positive leads for this period</div>
+  </div>
+</div>
+
+<!-- ══ DAILY REPORT ══ -->
+<div id="sec-daily" class="sec">
+  <div class="row"><i data-lucide="clipboard-pen" style="width:14px;height:14px;color:var(--gold)"></i><span class="sec-hd">Daily Tracking Report</span></div>
+  <div class="card" style="padding:16px;display:flex;flex-direction:column;gap:13px">
+    <div class="g2">
+      <div><label class="lbl">Your Full Name</label><input id="f-name" type="text" class="inp" placeholder="Full name"/></div>
+      <div><label class="lbl">Designation</label>
+        <select id="f-desig" class="inp" onchange="toggleDesig()">
+          <option value="">Select…</option>
+          <option value="Sales">Sales</option>
+          <option value="Telecaller">Telecaller</option>
+          <option value="Digital">Digital</option>
+        </select>
+      </div>
+    </div>
+    <!-- Sales/Telecaller -->
+    <div id="fld-sales" style="display:none;flex-direction:column;gap:12px">
+      <div class="g2">
+        <div><label class="lbl">Total Calls</label><input id="f-tc" type="number" class="inp" placeholder="0" min="0"/></div>
+        <div><label class="lbl">Connected</label><input id="f-cc" type="number" class="inp" placeholder="0" min="0"/></div>
+        <div><label class="lbl">Site Visits</label><input id="f-vi" type="number" class="inp" placeholder="0" min="0"/></div>
+        <div><label class="lbl">Bookings</label><input id="f-bk" type="number" class="inp" placeholder="0" min="0"/></div>
+      </div>
+      <div><label class="lbl">Positive Clients (count)</label><input id="f-pc" type="number" class="inp" placeholder="0" min="0"/></div>
+    </div>
+    <!-- Digital -->
+    <div id="fld-dig" style="display:none;flex-direction:column;gap:12px">
+      <div><label class="lbl">Created Posts (type)</label><input id="f-pt" type="text" class="inp" placeholder="e.g. Images & Reel"/></div>
+      <div class="g2">
+        <div><label class="lbl">Post Count</label><input id="f-pct" type="text" class="inp" placeholder="e.g. 2+1"/></div>
+        <div><label class="lbl">Post Uploads</label><input id="f-pu" type="number" class="inp" placeholder="0" min="0"/></div>
+      </div>
+    </div>
+    <div class="g2">
+      <div><label class="lbl">Targets Completed?</label>
+        <select id="f-tgt" class="inp"><option value="Yes">Yes ✅</option><option value="No">No ❌</option></select>
+      </div>
+      <div><label class="lbl">Schedule Date (optional)</label><input id="f-sched" type="date" class="inp"/></div>
+    </div>
+    <div><label class="lbl">Email (optional)</label><input id="f-email" type="email" class="inp" placeholder="your@email.com"/></div>
+    <button id="daily-btn" class="btn btn-gold" onclick="submitDaily()"><i data-lucide="send" style="width:15px;height:15px"></i>Submit Daily Report</button>
+  </div>
+</div>
+
+<!-- ══ LEAD FORM ══ -->
+<div id="sec-lead" class="sec">
+  <div class="row-sb">
+    <div class="row"><i data-lucide="star" style="width:14px;height:14px;color:var(--gold)"></i><span class="sec-hd">Add Positive Leads</span></div>
+    <button class="btn btn-ghost btn-sm" onclick="addCl()" style="display:flex;align-items:center;gap:5px"><i data-lucide="plus" style="width:13px;height:13px"></i>Add Client</button>
+  </div>
+  <div class="card" style="padding:16px;display:flex;flex-direction:column;gap:13px">
+    <div class="g2">
+      <div><label class="lbl">Your Full Name</label><input id="l-name" type="text" class="inp" placeholder="Your name"/></div>
+      <div><label class="lbl">Email (optional)</label><input id="l-email" type="email" class="inp" placeholder="your@email.com"/></div>
+    </div>
+    <div class="divider"></div>
+    <div id="cl-wrap" style="display:flex;flex-direction:column;gap:11px"></div>
+    <button id="lead-btn" class="btn btn-grn" onclick="submitLeads()"><i data-lucide="star" style="width:15px;height:15px"></i>Submit Leads</button>
+  </div>
+</div>
+
+<!-- ══ USERS ══ -->
+<div id="sec-users" class="sec">
+  <div class="row-sb">
+    <div class="row"><i data-lucide="users" style="width:14px;height:14px;color:var(--gold)"></i><span class="sec-hd">User Management</span></div>
+    <button class="btn btn-gold btn-sm" onclick="openAddUser()" style="display:flex;align-items:center;gap:5px"><i data-lucide="user-plus" style="width:13px;height:13px"></i>Add</button>
+  </div>
+  <div class="tbl-w card">
+    <table><thead><tr>
+      <th>User</th><th>UID</th><th>Role</th><th>Desig</th><th>Team</th><th>Status</th><th class="c">Actions</th>
+    </tr></thead><tbody id="users-body"></tbody></table>
+  </div>
+</div>
+
+<!-- ══ TEAMS ══ -->
+<div id="sec-teams" class="sec">
+  <div class="row-sb">
+    <div class="row"><i data-lucide="layers" style="width:14px;height:14px;color:var(--gold)"></i><span class="sec-hd">Teams</span></div>
+    <button class="btn btn-gold btn-sm" onclick="openTeam(null)" style="display:flex;align-items:center;gap:5px"><i data-lucide="plus" style="width:13px;height:13px"></i>Create</button>
+  </div>
+  <div id="teams-list" style="display:flex;flex-direction:column;gap:10px"></div>
+</div>
+
+<!-- ══ AUDIT ══ -->
+<div id="sec-audit" class="sec">
+  <div class="row-sb">
+    <div class="row"><i data-lucide="shield-check" style="width:14px;height:14px;color:var(--gold)"></i><span class="sec-hd">Audit Log</span></div>
+    <button onclick="fetchAudit()" class="btn btn-ghost btn-sm"><i data-lucide="refresh-cw" style="width:12px;height:12px"></i>Refresh</button>
+  </div>
+  <div class="tbl-w card">
+    <table><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Detail</th></tr></thead>
+    <tbody id="audit-body"></tbody></table>
+  </div>
+</div>
+
+<!-- ══ BACKUP ══ -->
+<div id="sec-backup" class="sec">
+  <div class="row"><i data-lucide="database-backup" style="width:14px;height:14px;color:var(--gold)"></i><span class="sec-hd">Backup System</span></div>
+  <div class="card" style="padding:16px;display:flex;flex-direction:column;gap:13px">
+    <div style="font-size:12px;color:#cbd5e1;line-height:1.6">Create a full backup of all Users, Daily Tracking, Leads, Settings and Teams data. Backups are stored in Google Sheets.</div>
+    <button class="btn btn-gold" onclick="createBackup()"><i data-lucide="save" style="width:15px;height:15px"></i>Create Full Backup Now</button>
+  </div>
+  <div class="row"><i data-lucide="clock" style="width:14px;height:14px;color:var(--muted)"></i><span class="sec-hd">Recent Backups</span></div>
+  <div class="tbl-w card">
+    <table><thead><tr><th>Backup ID</th><th>Timestamp</th><th>Type</th></tr></thead>
+    <tbody id="backup-body"></tbody></table>
+  </div>
+</div>
+
+<!-- ══ SETTINGS ══ -->
+<div id="sec-settings" class="sec">
+  <div class="row"><i data-lucide="settings-2" style="width:14px;height:14px;color:var(--gold)"></i><span class="sec-hd">Settings</span></div>
+  <div class="card" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+    <div style="font-size:12px;font-weight:900;text-transform:uppercase;color:#fff">Team Targets</div>
+    <div class="g2">
+      <div><label class="lbl">Call Target / Agent / Day</label><input id="s-ct" type="number" class="inp" min="1"/></div>
+      <div><label class="lbl">Booking Target / Agent / Day</label><input id="s-bt" type="number" class="inp" min="1"/></div>
+    </div>
+    <button class="btn btn-gold" onclick="saveSettings()">Save Targets</button>
+  </div>
+  <div class="card" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+    <div style="font-size:12px;font-weight:900;text-transform:uppercase;color:#fff">Message Templates</div>
+    <div style="font-size:10.5px;color:var(--muted)">Use <code style="background:rgba(255,255,255,.07);padding:2px 5px;border-radius:4px">{name}</code> <code style="background:rgba(255,255,255,.07);padding:2px 5px;border-radius:4px">{phone}</code> <code style="background:rgba(255,255,255,.07);padding:2px 5px;border-radius:4px">{agent}</code></div>
+    <div><label class="lbl">💬 WhatsApp</label><textarea id="s-wa" class="inp" rows="3" placeholder="Hi {name}, this is {agent} from Sunrise Realty…"></textarea></div>
+    <div><label class="lbl">📱 SMS</label><textarea id="s-sms" class="inp" rows="2" placeholder="Dear {name}, greetings from Sunrise Realty…"></textarea></div>
+    <div><label class="lbl">📧 Email Subject</label><input id="s-esubj" type="text" class="inp" placeholder="Sunrise Realty — Property Update"/></div>
+    <div><label class="lbl">📧 Email Body</label><textarea id="s-email" class="inp" rows="4" placeholder="Dear {name},…"></textarea></div>
+    <button class="btn btn-gold" onclick="saveTemplates()">Save Templates</button>
+  </div>
+</div>
+
+</main>
+</div><!-- /app -->
+
+<!-- ════════ MODALS ════════ -->
+<!-- Add/Edit User -->
+<div id="m-user" class="modal-bg">
+  <div class="modal"><div class="modal-body">
+    <div class="row-sb"><span style="font-size:13px;font-weight:900;text-transform:uppercase;color:#fff" id="mu-title">Add User</span><button onclick="closeM('m-user')" style="background:none;border:none;cursor:pointer;padding:4px"><i data-lucide="x" style="width:18px;height:18px;color:var(--muted)"></i></button></div>
+    <div class="g2">
+      <div><label class="lbl">Username *</label><input id="mu-un" type="text" class="inp" placeholder="unique username"/></div>
+      <div><label class="lbl">Password *</label><input id="mu-pw" type="text" class="inp" placeholder="password"/></div>
+      <div><label class="lbl">Full Name</label><input id="mu-fn" type="text" class="inp" placeholder="Full name"/></div>
+      <div><label class="lbl">Phone</label><input id="mu-ph" type="tel" class="inp" placeholder="10-digit" maxlength="10"/></div>
+    </div>
+    <div class="g2">
+      <div><label class="lbl">Role</label><select id="mu-role" class="inp"><option value="Agent">Agent</option><option value="Admin">Admin</option></select></div>
+      <div><label class="lbl">Designation</label><select id="mu-desig" class="inp"><option value="">Select…</option><option value="Sales">Sales</option><option value="Telecaller">Telecaller</option><option value="Digital">Digital</option></select></div>
+    </div>
+    <div><label class="lbl">Team</label><select id="mu-team" class="inp"><option value="">No Team</option></select></div>
+    <div><label class="lbl">Email</label><input id="mu-em" type="email" class="inp" placeholder="email@example.com"/></div>
+    <button class="btn btn-gold" id="mu-save" onclick="saveUser()">Save User</button>
+  </div></div>
+</div>
+
+<!-- Team Modal -->
+<div id="m-team" class="modal-bg">
+  <div class="modal"><div class="modal-body">
+    <div class="row-sb"><span style="font-size:13px;font-weight:900;text-transform:uppercase;color:#fff" id="mt-title">Create Team</span><button onclick="closeM('m-team')" style="background:none;border:none;cursor:pointer;padding:4px"><i data-lucide="x" style="width:18px;height:18px;color:var(--muted)"></i></button></div>
+    <div><label class="lbl">Team Name *</label><input id="mt-name" type="text" class="inp" placeholder="e.g. Alpha Squad"/></div>
+    <div><label class="lbl">Description</label><input id="mt-desc" type="text" class="inp" placeholder="Optional"/></div>
+    <div><label class="lbl">Select Members</label><div id="mt-members" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;padding:4px"></div></div>
+    <button class="btn btn-gold" onclick="saveTeam()">Save Team</button>
+  </div></div>
+</div>
+
+<!-- Message Modal -->
+<div id="m-msg" class="modal-bg">
+  <div class="modal"><div class="modal-body">
+    <div class="row-sb"><span style="font-size:13px;font-weight:900;text-transform:uppercase;color:#fff" id="mm-title">Send Message</span><button onclick="closeM('m-msg')" style="background:none;border:none;cursor:pointer;padding:4px"><i data-lucide="x" style="width:18px;height:18px;color:var(--muted)"></i></button></div>
+    <div id="mm-prev" style="background:rgba(255,255,255,.04);border-radius:12px;padding:13px;font-size:12.5px;color:#cbd5e1;line-height:1.65;border:1px solid var(--border);white-space:pre-wrap;max-height:160px;overflow-y:auto"></div>
+    <a id="mm-wa"  href="#" target="_blank" class="btn btn-grn" style="text-decoration:none"><i data-lucide="message-circle" style="width:15px;height:15px"></i>Open WhatsApp</a>
+    <a id="mm-sms" href="#" class="btn btn-ghost" style="text-decoration:none"><i data-lucide="smartphone" style="width:15px;height:15px"></i>Open SMS</a>
+    <a id="mm-em"  href="#" class="btn btn-ghost" style="text-decoration:none"><i data-lucide="mail" style="width:15px;height:15px"></i>Open Email</a>
+  </div></div>
+</div>
+
+<!-- Feedback Modal -->
+<div id="m-fb" class="modal-bg">
+  <div class="modal"><div class="modal-body">
+    <div class="row-sb"><span style="font-size:13px;font-weight:900;text-transform:uppercase;color:#fff">Client Feedback</span><button onclick="closeM('m-fb')" style="background:none;border:none;cursor:pointer;padding:4px"><i data-lucide="x" style="width:18px;height:18px;color:var(--muted)"></i></button></div>
+    <div id="fb-client-name" style="font-weight:900;color:#fff;font-size:14px"></div>
+    <div><label class="lbl">Feedback History</label><div id="fb-hist" class="fb-hist"></div></div>
+    <div>
+      <label class="lbl">Add New Feedback</label>
+      <textarea id="fb-new" class="inp" rows="3" placeholder="Enter updated feedback or remarks…"></textarea>
+    </div>
+    <input type="hidden" id="fb-row-idx"/>
+    <button class="btn btn-gold" onclick="saveFeedback()">Save Feedback</button>
+  </div></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// CONFIG — Replace with your deployed Apps Script URL
+// ══════════════════════════════════════════════════════
+const API = "https://script.google.com/macros/s/AKfycbzYWw6JYULIPlIINhJ1DfxFsB9EGM5CPLr8rbqrOfDBackFf5UNycGimOXnnLibflanWg/exec";
+const SYNC_MS      = 5000;   // 5-second auto-refresh
+const HEARTBEAT_MS = 30000;  // 30-second force-logout check
+
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+let GD=null, chart=null;
+let flt='today', dFlt='all', tFlt='';
+let editUser=null, clCount=0;
+let syncTimer, heartTimer, toastTimer;
+let isRangeOpen=false;
+let cfg={Call_Target:50,Booking_Target:2,WA_Template:'',SMS_Template:'',Email_Template:'',Email_Subject:''};
+
+// ══════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════
+const $=id=>document.getElementById(id);
+const ls=(k,v)=>v===undefined?localStorage.getItem(k)||'':localStorage.setItem(k,v);
+const me=()=>ls('sr_user');
+const myRole=()=>ls('sr_role');
+const myUID=()=>ls('sr_uid');
+const isAdmin=()=>myRole().toLowerCase()==='admin';
+const enc=v=>encodeURIComponent(v);
+const num=v=>parseInt(v)||0;
+const trim=v=>(v||'').toString().trim();
+const clamp=(v,min,max)=>Math.min(max,Math.max(min,v));
+
+function fillTpl(t,name,phone,agent){
+  return (t||'').replace(/\{name\}/g,name||'').replace(/\{phone\}/g,phone||'').replace(/\{agent\}/g,agent||'');
+}
+
+async function apiFetch(url){
+  const r=await fetch(url);
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return r.json();
+}
+async function apiPost(body){
+  const r=await fetch(API,{method:'POST',body:JSON.stringify(body)});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return r.json();
+}
+
+function fmtTime(d){
+  const dt=d||new Date();
+  return dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}).toUpperCase();
+}
+function fmtDateTime(d){
+  const dt=d||new Date();
+  return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})+' '+fmtTime(dt);
+}
+
+// ══════════════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════════════
+window.addEventListener('load',()=>{
+  setTimeout(()=>{
+    $('loader').classList.add('out');
+    if(ls('sr_auth')==='1'){
+      $('app').style.display='block';
+      bootApp();
+    } else {
+      $('login-scr').style.display='flex';
+    }
+    lucide.createIcons();
+  },1100);
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+  initPullToRefresh();
+});
+
+function bootApp(){
+  const user=me(), name=ls('sr_name')||user, role=myRole(), uid=myUID();
+  const av=name.charAt(0).toUpperCase();
+  $('p-av').textContent=av; $('dr-av').textContent=av;
+  $('p-name').textContent=user;
+  $('dr-name').textContent=name;
+  $('dr-uid').textContent='ID: '+uid;
+  $('dr-role').textContent=role;
+  $('dr-desig').textContent=ls('sr_desig');
+  const ph=ls('sr_phone'), em=ls('sr_email'), team=ls('sr_team');
+  let info='';
+  if(ph) info+=`<div style="display:flex;gap:8px;align-items:center;font-size:11px"><span style="font-size:8.5px;color:var(--muted);text-transform:uppercase;font-weight:800;min-width:44px">Phone</span><span style="color:#fff;font-weight:700">${ph}</span></div>`;
+  if(em) info+=`<div style="display:flex;gap:8px;align-items:center;font-size:11px"><span style="font-size:8.5px;color:var(--muted);text-transform:uppercase;font-weight:800;min-width:44px">Email</span><span style="color:#fff;font-weight:700;word-break:break-all">${em}</span></div>`;
+  if(team) info+=`<div style="display:flex;gap:8px;align-items:center"><span style="font-size:8.5px;color:var(--muted);text-transform:uppercase;font-weight:800;min-width:44px">Team</span><span class="badge b-blue">${team}</span></div>`;
+  $('dr-info').innerHTML=info||'<div style="font-size:11px;color:var(--muted)">No additional info</div>';
+
+  $('f-name').value=name; $('l-name').value=name;
+  const desig=ls('sr_desig');
+  if(desig){$('f-desig').value=desig;toggleDesig();}
+
+  document.querySelectorAll('.admin-el').forEach(el=>{
+    el.style.display=isAdmin()?'':'none';
+  });
+  if(isAdmin()){
+    $('sub-filters').style.display='flex';
+    $('perf-sec').style.display='flex';
+    $('chart-sec').style.display='flex';
+  }
+
+  $('tab-bar').classList.add('on');
+  $('sidebar').classList.add('open');
+
+  addCl();
+  fetchAll();
+  startSync();
+  startHeartbeat();
+  startSyncClock();
+}
+
+// ══════════════════════════════════════════════════════
+// CLOCK — shows current time ticking in sync status
+// ══════════════════════════════════════════════════════
+let lastSyncTime=null;
+function startSyncClock(){
+  setInterval(()=>{
+    if(lastSyncTime){
+      $('sync-txt').textContent='Synced '+fmtTime(lastSyncTime);
+    }
+  },1000);
+}
+
+// ══════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════
+async function doLogin(){
+  const u=trim($('un').value), p=trim($('pw').value);
+  $('login-err').style.display='none'; $('login-lock').style.display='none';
+  if(!u||!p) return;
+  const btn=$('login-btn'); btn.textContent='Verifying…'; btn.disabled=true;
+  try {
+    const d=await apiFetch(`${API}?action=login&user=${enc(u)}&pass=${enc(p)}`);
+    if(d.success){
+      ls('sr_auth','1'); ls('sr_user',trim(u)); ls('sr_role',trim(d.role));
+      ls('sr_desig',trim(d.designation||'')); ls('sr_name',trim(d.fullName||u));
+      ls('sr_team',trim(d.team||'')); ls('sr_phone',trim(d.phone||'')); ls('sr_email',trim(d.email||''));
+      ls('sr_uid',trim(d.userID||''));
+      $('login-scr').style.display='none';
+      $('app').style.display='block';
+      bootApp();
+    } else if(d.locked) $('login-lock').style.display='block';
+    else $('login-err').style.display='block';
+  } catch { showToast('Network error','e'); }
+  btn.textContent='Access Dashboard'; btn.disabled=false;
+  lucide.createIcons();
+}
+
+function doLogout(){
+  clearInterval(syncTimer); clearInterval(heartTimer);
+  localStorage.clear(); location.reload();
+}
+
+// ══════════════════════════════════════════════════════
+// PROFILE DRAWER
+// ══════════════════════════════════════════════════════
+function toggleDrawer(){const d=$('prof-drawer'),b=$('drawer-bg'),open=d.classList.contains('open');d.classList.toggle('open',!open);b.style.display=open?'none':'block';}
+function closeDrawer(){$('prof-drawer').classList.remove('open');$('drawer-bg').style.display='none';}
+
+// ══════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════
+function goSec(sec){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.tb,.ni').forEach(b=>b.classList.remove('on'));
+  const el=$(`sec-${sec}`);if(el) el.classList.add('on');
+  [$(`tb-${sec}`),$(`sn-${sec}`),$(`tb-more`)].forEach(b=>{
+    if(b&&(b.id===`tb-${sec}`||b.id===`sn-${sec}`)) b.classList.add('on');
+  });
+  if(sec==='audit') fetchAudit();
+  if(sec==='teams') renderTeams();
+  if(sec==='users') renderUsers();
+  if(sec==='backup') fetchBackups();
+  closeDrawer();
+  window.scrollTo({top:0,behavior:'smooth'});
+  lucide.createIcons();
+}
+
+// ══════════════════════════════════════════════════════
+// FETCH DATA
+// ══════════════════════════════════════════════════════
+async function fetchAll(){
+  try {
+    const d=await apiFetch(`${API}?action=data`);
+    if(d.success){
+      GD=d; cfg=Object.assign(cfg,d.settings||{});
+      loadSettings(); renderDash(); renderUsers(); renderTeams();
+      buildTeamPills();
+      lastSyncTime=new Date();
+      $('sync-txt').textContent='Synced '+fmtTime(lastSyncTime);
+    }
+  } catch { $('sync-txt').textContent='Sync failed'; }
+}
+
+function startSync(){clearInterval(syncTimer);syncTimer=setInterval(fetchAll,SYNC_MS);}
+
+function startHeartbeat(){
+  clearInterval(heartTimer);
+  heartTimer=setInterval(async()=>{
+    try {
+      const d=await apiFetch(`${API}?action=heartbeat&user=${enc(me())}`);
+      if(d&&d.forceLogout){showToast('Logged out by admin','e');setTimeout(doLogout,2200);}
+    } catch {}
+  },HEARTBEAT_MS);
+}
+
+async function manualRefresh(){
+  const btn=$('refresh-btn'); btn.classList.add('spinning');
+  await fetchAll();
+  clearInterval(syncTimer); syncTimer=setInterval(fetchAll,SYNC_MS);
+  setTimeout(()=>btn.classList.remove('spinning'),600);
+}
+
+// ══════════════════════════════════════════════════════
+// PULL TO REFRESH
+// ══════════════════════════════════════════════════════
+function initPullToRefresh(){
+  let startY=0,pulling=false;
+  document.addEventListener('touchstart',e=>{
+    if(window.scrollY===0) startY=e.touches[0].clientY;
+  },{passive:true});
+  document.addEventListener('touchmove',e=>{
+    if(!startY) return;
+    const dy=e.touches[0].clientY-startY;
+    if(dy>60&&!pulling){pulling=true;$('ptr').classList.add('show');}
+  },{passive:true});
+  document.addEventListener('touchend',()=>{
+    if(pulling){pulling=false;$('ptr').classList.remove('show');manualRefresh();startY=0;}
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// FILTERS
+// ══════════════════════════════════════════════════════
+function setF(f){
+  flt=f;
+  document.querySelectorAll('.pill[id^="fp-"]').forEach(b=>b.classList.remove('on'));
+  const el=$(`fp-${f}`);if(el) el.classList.add('on');
+  renderDash();
+}
+function toggleRng(){
+  isRangeOpen=!isRangeOpen;
+  $('rng-box').style.display=isRangeOpen?'block':'none';
+  $('fp-range-btn').classList.toggle('on',isRangeOpen);
+  if(!isRangeOpen){
+    // Reset range filter if closing without dates
+    if(!$('d-from').value||!$('d-to').value){setF('today');}
+  }
+}
+function setDF(d){
+  dFlt=d;
+  document.querySelectorAll('.pill[id^="df-"]').forEach(b=>b.classList.remove('on'));
+  const el=$(`df-${d}`);if(el) el.classList.add('on');
+  renderDash();
+}
+function setTF(t){tFlt=t;renderDash();}
+
+function buildTeamPills(){
+  if(!GD) return;
+  const wrap=$('team-pills');wrap.innerHTML='';
+  const allBtn=document.createElement('button');
+  allBtn.className='pill on';allBtn.id='tf-all';allBtn.textContent='All Teams';
+  allBtn.onclick=()=>{tFlt='';document.querySelectorAll('.pill[id^="tf-"]').forEach(b=>b.classList.remove('on'));allBtn.classList.add('on');renderDash();};
+  wrap.appendChild(allBtn);
+  (GD.teams||[]).forEach(t=>{
+    const b=document.createElement('button');
+    b.className='pill';b.id='tf-'+t.teamName.replace(/\s+/g,'-');b.textContent=t.teamName;
+    b.onclick=()=>{tFlt=t.teamName;document.querySelectorAll('.pill[id^="tf-"]').forEach(x=>x.classList.remove('on'));b.classList.add('on');renderDash();};
+    wrap.appendChild(b);
+  });
+}
+
+function inRng(ds){
+  if(flt==='all') return true;
+  if(!ds) return false;
+  const rd=new Date(ds);rd.setHours(0,0,0,0);
+  const now=new Date();now.setHours(0,0,0,0);
+  if(flt==='today')     return rd.getTime()===now.getTime();
+  if(flt==='yesterday'){const y=new Date(now);y.setDate(now.getDate()-1);return rd.getTime()===y.getTime();}
+  if(flt==='week')     {const s=new Date(now);s.setDate(now.getDate()-now.getDay());return rd>=s;}
+  if(flt==='month')     return rd.getMonth()===now.getMonth()&&rd.getFullYear()===now.getFullYear();
+  if(flt==='year')      return rd.getFullYear()===now.getFullYear();
+  if(flt==='range'){
+    const fv=$('d-from').value,tv=$('d-to').value;
+    if(!fv||!tv) return true;
+    const sd=new Date(fv);sd.setHours(0,0,0,0);
+    const ed=new Date(tv);ed.setHours(23,59,59,999);
+    return rd>=sd&&rd<=ed;
+  }
+  return true;
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER DASHBOARD
+// ══════════════════════════════════════════════════════
+function renderDash(){
+  if(!GD) return;
+  const admin=isAdmin(), myUser=trim(me()).toLowerCase();
+  const srch=trim(($('srch').value||'')).toLowerCase();
+  const uMap={};
+  (GD.users||[]).forEach(u=>uMap[trim(u.username).toLowerCase()]=u);
+
+  // Aggregate by UserID — truly unique per person
+  const perf={};
+  (GD.dailyTracking||[]).forEach(row=>{
+    const uname=trim(row.Username||'').toLowerCase();
+    const uid=trim(row.UserID||'');
+    if(!uname&&!uid) return;
+    const key=uid||uname; // prefer UID
+    if(!inRng(row.Timestamp||row.Date)) return;
+    const isMe=uname===myUser||(uid&&uid===myUID());
+    if(!admin&&!isMe) return;
+    const u=uMap[uname]||{};
+    const desig=trim(row.Designation||u.designation||'');
+    if(dFlt!=='all'&&desig!==dFlt) return;
+    if(tFlt&&trim(u.team||'')!==tFlt) return;
+    if(!perf[key]) perf[key]={name:u.fullName||u.username||uname,desig,team:trim(u.team||''),uid:uid||'—',c:0,cc:0,v:0,b:0,p:0,followUps:0};
+    perf[key].c+=num(row.TotalCalls);
+    perf[key].cc+=num(row.ConnectedCalls);
+    perf[key].v+=num(row.Visits);
+    perf[key].b+=num(row.Bookings);
+    perf[key].p+=num(row.PositiveClients);
+  });
+
+  // Also sum follow-ups from leads
+  (GD.positiveLeads||[]).forEach(l=>{
+    const uid=trim(l.UserID||'');
+    const uname=trim(l.Username||'').toLowerCase();
+    const key=uid||uname;
+    if(perf[key]) perf[key].followUps+=num(l.FollowUpCount);
+  });
+
+  let tC=0,tCC=0,tV=0,tB=0,tP=0;
+  Object.values(perf).forEach(p=>{tC+=p.c;tCC+=p.cc;tV+=p.v;tB+=p.b;tP+=p.p;});
+  $('s-calls').textContent=tC.toLocaleString();
+  $('s-conn').textContent=tCC.toLocaleString()+' connected';
+  $('s-visits').textContent=tV.toLocaleString();
+  $('s-books').textContent=tB.toLocaleString();
+  $('s-pos').textContent=tP.toLocaleString();
+  const bt=Number(cfg.Booking_Target)||2;
+  const pct=bt>0?Math.min(100,(tB/bt)*100):0;
+  $('book-prog').style.width=pct+'%';
+  $('book-tgt').textContent='of '+bt+' target';
+
+  // Ranked table — sort by bookings desc, then calls
+  const tbody=$('perf-body');tbody.innerHTML='';
+  const ranked=Object.values(perf)
+    .filter(p=>!srch||trim(p.name).toLowerCase().includes(srch)||trim(p.uid).toLowerCase().includes(srch))
+    .sort((a,b)=>b.b-a.b||b.c-a.c||b.p-a.p);
+
+  if(!ranked.length){
+    tbody.innerHTML=`<tr><td colspan="9" class="empty">No data for this period</td></tr>`;
+  } else {
+    ranked.forEach((p,i)=>{
+      const rk=i===0?`<span class="r1">🥇 1</span>`:i===1?`<span class="r2">🥈 2</span>`:i===2?`<span class="r3">🥉 3</span>`:`<span style="font-size:11px;color:var(--muted);font-weight:900">${i+1}</span>`;
+      const db=p.desig==='Sales'?'b-gold':p.desig==='Digital'?'b-blue':'b-gray';
+      tbody.innerHTML+=`<tr>
+        <td class="c">${rk}</td>
+        <td style="color:#fff;font-weight:900">${p.name}<div style="font-size:8.5px;color:var(--muted);margin-top:1px">UID: ${p.uid}</div></td>
+        <td><span class="badge ${db}">${p.desig||'—'}</span></td>
+        <td style="color:var(--muted);font-size:10px;white-space:nowrap">${p.team||'—'}</td>
+        <td class="c" style="color:#cbd5e1">${p.c}</td>
+        <td class="c" style="color:var(--blue)">${p.cc}</td>
+        <td class="c">${p.v}</td>
+        <td class="c" style="color:var(--grn);font-weight:900">${p.b}</td>
+        <td class="c" style="color:var(--gold)">${p.p}</td>
+      </tr>`;
+    });
+  }
+  if(admin) renderChart(ranked);
+
+  // Leads feed
+  const wrap=$('leads-wrap');wrap.innerHTML='';
+  let cnt=0;
+  const leads=[...(GD.positiveLeads||[])].reverse();
+  leads.forEach(l=>{
+    const uname=trim(l.Username||'').toLowerCase();
+    const uid=trim(l.UserID||'');
+    const isMe=uname===myUser||(uid&&uid===myUID());
+    const clName=trim(l.ClientName||'').toLowerCase();
+    if(!inRng(l.Timestamp||l.Date)) return;
+    if(!admin&&!isMe) return;
+    const u=uMap[uname]||{};
+    if(dFlt!=='all'&&trim(u.designation||'')!==dFlt) return;
+    if(tFlt&&trim(u.team||'')!==tFlt) return;
+    if(srch&&!uname.includes(srch)&&!trim(u.fullName||'').toLowerCase().includes(srch)&&!clName.includes(srch)) return;
+    cnt++;
+    const ph=trim(l.ContactNo||'').replace(/\D/g,'');
+    const phWA=ph.length===10?'91'+ph:ph;
+    const agentName=u.fullName||l.EmployeeName||uname;
+    const schedInfo=(trim(l.ScheduledDate||'')||trim(l.ScheduledTime||''))?` <span class="badge b-blue" style="margin-left:4px">📅 ${trim(l.ScheduledDate||'')} ${trim(l.ScheduledTime||'')}</span>`:'';
+    const fuCount=num(l.FollowUpCount);
+    const rowIdx=l._rowIndex||0;
+    const hist=trim(l.FeedbackHistory||'[]');
+
+    wrap.innerHTML+=`
+    <div class="card lead-card fade-up">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;width:100%">
+        <div style="min-width:0;flex:1">
+          <div style="font-weight:900;color:#fff;font-size:13px;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${trim(l.ClientName)||'—'}</div>
+          <div style="font-size:8.5px;font-weight:800;color:var(--gold);text-transform:uppercase;margin-top:2px">Agent: ${agentName}</div>
+        </div>
+        <span class="badge b-grn" style="flex-shrink:0">✓ Success</span>
+      </div>
+      ${trim(l.Feedback)?`<div style="font-size:12px;color:#cbd5e1;font-style:italic;background:rgba(0,0,0,.18);border-radius:10px;padding:10px 13px;border:1px solid var(--border);word-break:break-word">"${trim(l.Feedback)}"</div>`:''}
+      <div style="font-size:8.5px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;flex-wrap:wrap;gap:4px">
+        ${trim(l.Timestamp||l.Date||'')}${schedInfo}
+        ${fuCount?`<span class="badge b-blue">📞 ${fuCount} follow-up${fuCount>1?'s':''}</span>`:''}
+      </div>
+      <div class="lead-actions">
+        <a href="tel:${ph}" style="padding:10px;border-radius:9px;background:var(--gold);color:#000;font-size:10px;font-weight:900;text-transform:uppercase;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:5px">📞 Call</a>
+        <a href="https://wa.me/${phWA}" target="_blank" style="padding:10px;border-radius:9px;background:#25d366;color:#fff;font-size:10px;font-weight:900;text-transform:uppercase;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:5px">💬 WA</a>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+        <button data-action="followup" data-row="${rowIdx}" data-uname="${uname}" style="padding:9px;border-radius:9px;border:1px solid rgba(59,130,246,.25);background:var(--blueb);color:var(--blue);font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer">📞 +Follow Up</button>
+        <button data-action="feedback" data-row="${rowIdx}" data-client="${encodeURIComponent(trim(l.ClientName))}" data-hist="${encodeURIComponent(hist)}" style="padding:9px;border-radius:9px;border:1px solid var(--border);background:rgba(255,255,255,.04);color:var(--muted);font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer">✏️ Feedback</button>
+      </div>
+      <button data-action="msg" data-client="${encodeURIComponent(trim(l.ClientName))}" data-ph="${ph}" data-agent="${encodeURIComponent(agentName)}" style="padding:9px;border-radius:9px;border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--muted);font-size:10px;font-weight:900;text-transform:uppercase;cursor:pointer;width:100%"><i data-lucide="send" style="width:13px;height:13px;vertical-align:middle;margin-right:4px"></i>Send Template Message</button>
+    </div>`;
+  });
+  $('no-leads').style.display=cnt?'none':'block';
+  lucide.createIcons();
+}
+
+// ══════════════════════════════════════════════════════
+// CHART
+// ══════════════════════════════════════════════════════
+function renderChart(ranked){
+  if(!ranked.length) return;
+  const ctx=$('perf-chart').getContext('2d');
+  if(chart) chart.destroy();
+  chart=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:ranked.map(p=>trim(p.name).split(' ')[0]),
+      datasets:[
+        {label:'Calls',   data:ranked.map(p=>p.c),backgroundColor:'rgba(245,158,11,.78)',borderRadius:5},
+        {label:'Visits',  data:ranked.map(p=>p.v),backgroundColor:'rgba(59,130,246,.75)', borderRadius:5},
+        {label:'Bookings',data:ranked.map(p=>p.b),backgroundColor:'rgba(16,185,129,.85)', borderRadius:5}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:true,
+      plugins:{legend:{labels:{color:'#94a3b8',font:{size:10,weight:'bold'},boxWidth:12}}},
+      scales:{
+        x:{ticks:{color:'#64748b',font:{size:9,weight:'bold'}},grid:{color:'rgba(255,255,255,.03)'}},
+        y:{ticks:{color:'#64748b',font:{size:9}},grid:{color:'rgba(255,255,255,.03)'}}
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// DAILY FORM
+// ══════════════════════════════════════════════════════
+function toggleDesig(){
+  const d=$('f-desig').value;
+  $('fld-sales').style.display=(d==='Sales'||d==='Telecaller')?'flex':'none';
+  $('fld-dig').style.display=d==='Digital'?'flex':'none';
+  if($('fld-sales').style.display==='flex') $('fld-sales').style.flexDirection='column';
+  if($('fld-dig').style.display==='flex')   $('fld-dig').style.flexDirection='column';
+}
+
+async function submitDaily(){
+  const name=trim($('f-name').value), desig=$('f-desig').value;
+  if(!name) return showToast('Enter your name','e');
+  if(!desig) return showToast('Select designation','e');
+  const btn=$('daily-btn'); setLoading(btn,true,'Submitting…');
+  const body={action:'submitDaily',username:me(),userID:myUID(),employeeName:name,designation:desig,
+    email:trim($('f-email').value), targetsCompleted:$('f-tgt').value,
+    scheduledDate:$('f-sched').value||''};
+  if(desig==='Digital'){
+    body.createdPosts=trim($('f-pt').value);body.postCounts=trim($('f-pct').value);body.postUploads=$('f-pu').value;
+  } else {
+    body.totalCalls=$('f-tc').value||0;body.connectedCalls=$('f-cc').value||0;
+    body.visits=$('f-vi').value||0;body.bookings=$('f-bk').value||0;body.positiveClients=$('f-pc').value||0;
+  }
+  try {
+    const d=await apiPost(body);
+    if(d.success){showToast('Daily report submitted! ✅','s');clearDailyForm();goSec('dash');}
+    else showToast(d.message||'Submission failed','e');
+  } catch { showToast('Network error','e'); }
+  setLoading(btn,false,'<i data-lucide="send" style="width:15px;height:15px"></i>Submit Daily Report');
+  lucide.createIcons();
+}
+
+function clearDailyForm(){
+  ['f-tc','f-cc','f-vi','f-bk','f-pc','f-pt','f-pct','f-pu','f-email','f-sched'].forEach(id=>{const e=$(id);if(e)e.value='';});
+  $('f-tgt').value='Yes';
+}
+
+// ══════════════════════════════════════════════════════
+// MULTI-CLIENT LEAD FORM
+// ══════════════════════════════════════════════════════
+function addCl(){
+  clCount++;
+  const id=clCount;
+  const div=document.createElement('div');
+  div.className='cl-row';div.id='cl-'+id;
+  div.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:10px;font-weight:900;text-transform:uppercase;color:var(--muted)">Client ${id}</span>
+      ${id>1?`<button onclick="rmCl(${id})" style="background:none;border:none;cursor:pointer;color:var(--red);display:flex;align-items:center;gap:4px;font-size:10px;font-weight:800;-webkit-tap-highlight-color:transparent"><i data-lucide="trash-2" style="width:13px;height:13px"></i>Remove</button>`:''}
+    </div>
+    <div class="g2">
+      <div><label class="lbl">Client Name *</label><input id="cn-${id}" type="text" class="inp" placeholder="Full name"/></div>
+      <div><label class="lbl">Contact No *</label><input id="cp-${id}" type="tel" class="inp" placeholder="10-digit" maxlength="10" inputmode="numeric"/></div>
+    </div>
+    <div><label class="lbl">Feedback / Remarks</label><textarea id="cf-${id}" class="inp" rows="2" placeholder="What was discussed?"></textarea></div>
+    <div class="g2">
+      <div><label class="lbl">Schedule Date</label><input id="cd-${id}" type="date" class="inp"/></div>
+      <div><label class="lbl">Schedule Time</label><input id="ct-${id}" type="time" class="inp"/></div>
+    </div>`;
+  $('cl-wrap').appendChild(div);
+  lucide.createIcons();
+}
+function rmCl(id){const el=$('cl-'+id);if(el)el.remove();}
+
+async function submitLeads(){
+  const name=trim($('l-name').value);
+  if(!name) return showToast('Enter your name','e');
+  const rows=$('cl-wrap').querySelectorAll('.cl-row');
+  const clients=[];let ok=true;
+  rows.forEach(r=>{
+    const id=r.id.replace('cl-','');
+    const cn=trim($(`cn-${id}`)?.value||'');
+    const ph=trim($(`cp-${id}`)?.value||'');
+    const fb=trim($(`cf-${id}`)?.value||'');
+    const sd=$(`cd-${id}`)?.value||'';
+    const st=$(`ct-${id}`)?.value||'';
+    if(!cn||!ph){ok=false;return;}
+    if(ph.length!==10){ok=false;return;}
+    clients.push({clientName:cn,contactNo:ph,feedback:fb,scheduledDate:sd,scheduledTime:st});
+  });
+  if(!ok) return showToast('Fill all names & valid 10-digit numbers','e');
+  if(!clients.length) return showToast('Add at least one client','e');
+  const btn=$('lead-btn');setLoading(btn,true,'Submitting…');
+  try {
+    const d=await apiPost({action:'submitLead',username:me(),userID:myUID(),employeeName:name,email:trim($('l-email').value),clients});
+    if(d.success){showToast(`${clients.length} lead(s) submitted! ⭐`,'s');$('cl-wrap').innerHTML='';clCount=0;addCl();$('l-email').value='';goSec('dash');}
+    else showToast(d.message||'Failed','e');
+  } catch { showToast('Network error','e'); }
+  setLoading(btn,false,'<i data-lucide="star" style="width:15px;height:15px"></i>Submit Leads');
+  lucide.createIcons();
+}
+
+// ══════════════════════════════════════════════════════
+// FOLLOW-UP
+// ══════════════════════════════════════════════════════
+async function addFollowUp(rowIdx,uname){
+  if(!rowIdx) return showToast('Cannot track this entry','w');
+  try {
+    const d=await apiPost({action:'addFollowUp',rowIndex:rowIdx,username:me()||uname});
+    if(d.success){showToast(`Follow-up #${d.followUpCount} added! 📞`,'s');fetchAll();}
+    else showToast(d.message||'Error','e');
+  } catch { showToast('Network error','e'); }
+}
+
+// ══════════════════════════════════════════════════════
+// FEEDBACK HISTORY
+// ══════════════════════════════════════════════════════
+function openFeedback(rowIdx,clientName,histEnc){
+  $('fb-row-idx').value=rowIdx;
+  $('fb-client-name').textContent=clientName;
+  $('fb-new').value='';
+  try {
+    const hist=JSON.parse(decodeURIComponent(histEnc)||'[]');
+    $('fb-hist').innerHTML=hist.length?hist.map(h=>`
+      <div class="fb-item">${trim(h.text)}<div class="fb-ts">${h.ts||''}</div></div>`).join(''):'<div style="font-size:11px;color:var(--muted)">No previous feedback.</div>';
+  } catch {$('fb-hist').innerHTML='<div style="font-size:11px;color:var(--muted)">Error loading history.</div>';}
+  openM('m-fb');
+}
+
+async function saveFeedback(){
+  const rowIdx=num($('fb-row-idx').value);
+  const text=trim($('fb-new').value);
+  if(!rowIdx) return showToast('Invalid row index','e');
+  if(!text) return showToast('Enter feedback text','e');
+  try {
+    const d=await apiPost({action:'updateFeedback',rowIndex:rowIdx,feedback:text,username:me()});
+    if(d.success){showToast('Feedback updated! ✅','s');closeM('m-fb');fetchAll();}
+    else showToast(d.message||'Error','e');
+  } catch { showToast('Network error','e'); }
+}
+
+// ══════════════════════════════════════════════════════
+// USER MANAGEMENT
+// ══════════════════════════════════════════════════════
+function renderUsers(){
+  if(!GD||!$('users-body')) return;
+  const tbody=$('users-body');tbody.innerHTML='';
+  const users=GD.users||[];
+  if(!users.length){tbody.innerHTML=`<tr><td colspan="7" class="empty">No users</td></tr>`;return;}
+  users.forEach(u=>{
+    const locked=u.status==='locked';
+    tbody.innerHTML+=`<tr>
+      <td><div style="font-weight:900;color:#fff;font-size:11px">${u.username}</div><div style="font-size:8.5px;color:var(--muted)">${u.fullName||''}</div></td>
+      <td style="font-size:9px;color:var(--muted);font-family:monospace">${u.userID||'—'}</td>
+      <td><span class="badge ${u.role==='Admin'?'b-gold':'b-gray'}">${u.role}</span></td>
+      <td><span class="badge b-blue">${u.designation||'—'}</span></td>
+      <td style="color:var(--muted);font-size:10px">${u.team||'—'}</td>
+      <td><span class="badge ${locked?'b-red':'b-grn'}">${locked?'🔒':'✓'}</span></td>
+      <td class="c">
+        <div style="display:flex;gap:4px;justify-content:center">
+          <button onclick='editUserFn("${u.username}")' class="btn btn-ghost btn-icon" title="Edit"><i data-lucide="pencil" style="width:12px;height:12px"></i></button>
+          <button onclick='doLock("${u.username}",${!locked})' class="btn btn-ghost btn-icon" style="color:${locked?'var(--grn)':'var(--gold)'}" title="${locked?'Unlock':'Lock'}">${locked?'🔓':'🔒'}</button>
+          <button onclick='doForce("${u.username}")' class="btn btn-ghost btn-icon" title="Force Logout"><i data-lucide="log-out" style="width:12px;height:12px;color:var(--blue)"></i></button>
+          ${u.username!==me()?`<button onclick='doRemove("${u.username}")' class="btn btn-red btn-icon" title="Remove"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>`:''}
+        </div>
+      </td>
+    </tr>`;
+  });
+  lucide.createIcons();
+}
+
+function openAddUser(){
+  editUser=null;$('mu-title').textContent='Add User';$('mu-save').textContent='Save User';
+  ['mu-un','mu-pw','mu-fn','mu-ph','mu-em'].forEach(id=>$(id).value='');
+  $('mu-role').value='Agent';$('mu-desig').value='';
+  $('mu-un').disabled=false;
+  populateTeamSel('mu-team','');
+  openM('m-user');
+}
+
+function editUserFn(uname){
+  if(!GD) return;
+  const u=(GD.users||[]).find(x=>x.username===uname);
+  if(!u) return;
+  editUser=uname;$('mu-title').textContent='Edit User';$('mu-save').textContent='Update';
+  $('mu-un').value=u.username;$('mu-un').disabled=true;
+  $('mu-pw').value='';$('mu-fn').value=u.fullName||'';
+  $('mu-ph').value=u.phone||'';$('mu-em').value=u.email||'';
+  $('mu-role').value=u.role||'Agent';$('mu-desig').value=u.designation||'';
+  populateTeamSel('mu-team',u.team||'');
+  openM('m-user');
+}
+
+function populateTeamSel(selId,current){
+  const sel=$(selId);if(!sel) return;
+  sel.innerHTML='<option value="">No Team</option>';
+  (GD&&GD.teams||[]).forEach(t=>{
+    const o=document.createElement('option');
+    o.value=t.teamName;o.textContent=t.teamName;
+    if(t.teamName===current) o.selected=true;
+    sel.appendChild(o);
+  });
+}
+
+async function saveUser(){
+  const uname=trim($('mu-un').value).toLowerCase();
+  if(!uname) return showToast('Username required','e');
+  const pw=trim($('mu-pw').value);
+  const body={action:editUser?'updateUser':'addUser',adminUser:me(),username:uname,
+    fullName:trim($('mu-fn').value),phone:trim($('mu-ph').value),
+    email:trim($('mu-em').value),role:$('mu-role').value,
+    designation:$('mu-desig').value,team:$('mu-team').value};
+  if(pw) body.password=pw;
+  try {
+    const d=await apiPost(body);
+    if(d.success){showToast(d.message+(d.userID?` (ID: ${d.userID})`:''),'s');closeM('m-user');fetchAll();}
+    else showToast(d.message||'Error','e');
+  } catch { showToast('Network error','e'); }
+}
+
+async function doLock(uname,lock){
+  if(!confirm(`${lock?'Lock':'Unlock'} user "${uname}"?`)) return;
+  try {
+    const d=await apiPost({action:'lockUser',adminUser:me(),username:uname,lock});
+    if(d.success){showToast(d.message,'s');fetchAll();}
+  } catch { showToast('Network error','e'); }
+}
+
+async function doForce(uname){
+  if(!confirm(`Force logout "${uname}"?`)) return;
+  try {
+    const d=await apiPost({action:'forceLogout',adminUser:me(),username:uname});
+    if(d.success) showToast('User force-logged out','s');
+  } catch { showToast('Network error','e'); }
+}
+
+async function doRemove(uname){
+  if(!confirm(`Remove "${uname}" permanently?`)) return;
+  try {
+    const d=await apiPost({action:'removeUser',adminUser:me(),username:uname});
+    if(d.success){showToast('User removed','s');fetchAll();}
+    else showToast(d.message,'e');
+  } catch { showToast('Network error','e'); }
+}
+
+// ══════════════════════════════════════════════════════
+// TEAMS
+// ══════════════════════════════════════════════════════
+function renderTeams(){
+  if(!GD||!$('teams-list')) return;
+  const wrap=$('teams-list');wrap.innerHTML='';
+  const teams=GD.teams||[];
+  if(!teams.length){wrap.innerHTML=`<div class="empty">No teams. Create one!</div>`;return;}
+  teams.forEach(t=>{
+    const div=document.createElement('div');div.className='card';div.style.padding='15px';
+    div.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div><div style="font-weight:900;color:#fff;font-size:13.5px">${t.teamName}</div>${t.description?`<div style="font-size:10px;color:var(--muted);margin-top:2px">${t.description}</div>`:''}</div>
+        <div style="display:flex;gap:5px">
+          <button onclick='openTeam("${t.teamName}")' class="btn btn-ghost btn-sm">Edit</button>
+          <button onclick='deleteTeam("${t.teamName}")' class="btn btn-red btn-sm">Del</button>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px">${(t.members||[]).map(m=>`<span class="badge b-blue">${m}</span>`).join('')||'<span style="font-size:10px;color:var(--muted)">No members</span>'}</div>`;
+    wrap.appendChild(div);
+  });
+}
+
+function openTeam(tname){
+  const t=tname?(GD&&GD.teams||[]).find(x=>x.teamName===tname):null;
+  $('mt-title').textContent=t?'Edit Team':'Create Team';
+  $('mt-name').value=t?t.teamName:'';$('mt-name').disabled=!!t;
+  $('mt-desc').value=t?t.description||'':'';
+  const wrap=$('mt-members');wrap.innerHTML='';
+  const sel=t?(t.members||[]):[];
+  (GD&&GD.users||[]).forEach(u=>{
+    const lbl=document.createElement('label');
+    lbl.style.cssText='display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;background:rgba(255,255,255,.03);cursor:pointer;font-size:12px;font-weight:700;color:var(--text)';
+    lbl.innerHTML=`<input type="checkbox" value="${u.username}" ${sel.includes(u.username)?'checked':''} style="accent-color:var(--gold);width:14px;height:14px"> ${u.fullName||u.username} <span class="badge b-gray" style="margin-left:auto">${u.designation||'—'}</span>`;
+    wrap.appendChild(lbl);
+  });
+  openM('m-team');
+}
+
+async function saveTeam(){
+  const name=trim($('mt-name').value);
+  if(!name) return showToast('Team name required','e');
+  const members=[...$('mt-members').querySelectorAll('input:checked')].map(c=>c.value);
+  try {
+    const d=await apiPost({action:'saveTeam',adminUser:me(),teamName:name,description:trim($('mt-desc').value),members});
+    if(d.success){showToast(d.message,'s');closeM('m-team');fetchAll();}
+    else showToast('Error','e');
+  } catch { showToast('Network error','e'); }
+}
+
+async function deleteTeam(name){
+  if(!confirm(`Delete team "${name}"?`)) return;
+  try {
+    const d=await apiPost({action:'deleteTeam',adminUser:me(),teamName:name});
+    if(d.success){showToast('Team deleted','s');fetchAll();}
+  } catch { showToast('Network error','e'); }
+}
+
+// ══════════════════════════════════════════════════════
+// AUDIT LOG
+// ══════════════════════════════════════════════════════
+async function fetchAudit(){
+  const tbody=$('audit-body');if(!tbody) return;
+  tbody.innerHTML=`<tr><td colspan="4" class="empty">Loading…</td></tr>`;
+  try {
+    const d=await apiFetch(`${API}?action=audit`);
+    tbody.innerHTML='';
+    if(d.success&&d.logs&&d.logs.length){
+      d.logs.forEach(l=>{
+        const act=(l[2]||'');
+        const col=act.includes('FAIL')||act.includes('BLOCK')||act.includes('REMOVE')||act.includes('LOCKED')?'var(--red)':
+                  act.includes('SUCCESS')||act.includes('ADD')||act.includes('UNLOCK')?'var(--grn)':
+                  act.includes('FORCE')||act.includes('UPDATE')?'var(--gold)':'var(--muted)';
+        tbody.innerHTML+=`<tr>
+          <td style="color:var(--muted);font-size:9.5px;white-space:nowrap">${l[0]||''}</td>
+          <td style="font-weight:800;color:#fff">${l[1]||''}</td>
+          <td style="color:${col};font-weight:800;font-size:10px">${act}</td>
+          <td style="color:var(--muted);font-size:10px">${l[3]||''}</td>
+        </tr>`;
+      });
+    } else tbody.innerHTML=`<tr><td colspan="4" class="empty">No logs</td></tr>`;
+  } catch { tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--red)">Failed to load</td></tr>`; }
+}
+
+// ══════════════════════════════════════════════════════
+// BACKUP
+// ══════════════════════════════════════════════════════
+async function createBackup(){
+  showToast('Creating backup…','w');
+  try {
+    const d=await apiPost({action:'createBackup',adminUser:me()});
+    if(d.success){showToast('Backup created: '+d.backupID,'s');fetchBackups();}
+    else showToast('Backup failed','e');
+  } catch { showToast('Network error','e'); }
+}
+
+async function fetchBackups(){
+  const tbody=$('backup-body');if(!tbody) return;
+  tbody.innerHTML=`<tr><td colspan="3" class="empty">Loading…</td></tr>`;
+  try {
+    const d=await apiFetch(`${API}?action=backup`);
+    tbody.innerHTML='';
+    if(d.success&&d.backups&&d.backups.length){
+      d.backups.forEach(b=>{
+        tbody.innerHTML+=`<tr>
+          <td style="font-family:monospace;font-size:10px;color:var(--gold)">${b.id}</td>
+          <td style="font-size:10px;color:#cbd5e1">${b.timestamp}</td>
+          <td><span class="badge b-grn">${b.type}</span></td>
+        </tr>`;
+      });
+    } else tbody.innerHTML=`<tr><td colspan="3" class="empty">No backups yet</td></tr>`;
+  } catch { tbody.innerHTML=`<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--red)">Failed to load</td></tr>`; }
+}
+
+// ══════════════════════════════════════════════════════
+// EXPORT — XLSX
+// ══════════════════════════════════════════════════════
+function exportXLSX(){
+  if(!GD) return showToast('No data to export','e');
+  try {
+    const wb=XLSX.utils.book_new();
+    // Daily tracking
+    const dailyData=(GD.dailyTracking||[]).map(r=>[r.Timestamp||'',r.EmployeeName||'',r.UserID||'',r.Username||'',r.Designation||'',r.TotalCalls||0,r.ConnectedCalls||0,r.Visits||0,r.Bookings||0,r.TargetsCompleted||'',r.PositiveClients||0]);
+    const ws1=XLSX.utils.aoa_to_sheet([['Timestamp','Employee','UserID','Username','Designation','Calls','Connected','Visits','Bookings','Target','Positive'],...dailyData]);
+    XLSX.utils.book_append_sheet(wb,ws1,'Daily Tracking');
+    // Leads
+    const leadsData=(GD.positiveLeads||[]).map(r=>[r.Timestamp||'',r.EmployeeName||'',r.UserID||'',r.Username||'',r.ClientName||'',r.ContactNo||'',r.Feedback||'',r.ScheduledDate||'',r.ScheduledTime||'',r.FollowUpCount||0]);
+    const ws2=XLSX.utils.aoa_to_sheet([['Timestamp','Agent','UserID','Username','Client','Phone','Feedback','Sched Date','Sched Time','Follow-ups'],...leadsData]);
+    XLSX.utils.book_append_sheet(wb,ws2,'Positive Leads');
+    XLSX.writeFile(wb,'SunriseRealty_Export_'+new Date().toISOString().slice(0,10)+'.xlsx');
+    showToast('Excel exported! ✅','s');
+  } catch(err){ showToast('Export failed: '+err.message,'e'); }
+}
+
+// ══════════════════════════════════════════════════════
+// EXPORT — PDF (print-based)
+// ══════════════════════════════════════════════════════
+function exportPDF(){
+  if(!GD) return showToast('No data to export','e');
+  const w=window.open('','_blank');
+  if(!w) return showToast('Allow popups to export PDF','w');
+  const daily=(GD.dailyTracking||[]);
+  const rows=daily.map(function(r){
+    return '<tr><td>'+(r.Timestamp||'')+'</td><td>'+(r.EmployeeName||'')+'</td><td>'+(r.Designation||'')+'</td><td>'+(r.TotalCalls||0)+'</td><td>'+(r.ConnectedCalls||0)+'</td><td>'+(r.Visits||0)+'</td><td>'+(r.Bookings||0)+'</td><td>'+(r.PositiveClients||0)+'</td></tr>';
+  }).join('');
+  const leadsRows=(GD.positiveLeads||[]).map(function(l){
+    return '<tr><td>'+(l.Timestamp||'')+'</td><td>'+(l.EmployeeName||'')+'</td><td>'+(l.ClientName||'')+'</td><td>'+(l.ContactNo||'')+'</td><td>'+(l.Feedback||'')+'</td><td>'+(l.FollowUpCount||0)+'</td></tr>';
+  }).join('');
+  var ts=new Date().toLocaleString('en-IN');
+  var html='<!DOCTYPE html><html><head><title>Sunrise Realty Report</title>';
+  html+='<style>body{font-family:Arial,sans-serif;padding:20px;color:#222}';
+  html+='h1{color:#d97706}h2{color:#444;margin-top:20px}';
+  html+='table{width:100%;border-collapse:collapse;margin-top:10px}';
+  html+='th{background:#f59e0b;color:#000;padding:8px;font-size:11px;text-align:left}';
+  html+='td{padding:7px 8px;border-bottom:1px solid #eee;font-size:11px}';
+  html+='.footer{margin-top:30px;font-size:10px;color:#999;text-align:center}';
+  html+='@media print{.no-print{display:none}}</style></head><body>';
+  html+='<h1>&#127773; Sunrise Realty &mdash; Export Report</h1>';
+  html+='<p style="color:#666;font-size:12px">Generated: '+ts+'</p>';
+  html+='<h2>Daily Tracking</h2>';
+  html+='<table><thead><tr><th>Timestamp</th><th>Employee</th><th>Designation</th><th>Calls</th><th>Connected</th><th>Visits</th><th>Bookings</th><th>Positive</th></tr></thead>';
+  html+='<tbody>'+rows+'</tbody></table>';
+  html+='<h2>Positive Leads</h2>';
+  html+='<table><thead><tr><th>Timestamp</th><th>Agent</th><th>Client</th><th>Phone</th><th>Feedback</th><th>Follow-ups</th></tr></thead>';
+  html+='<tbody>'+leadsRows+'</tbody></table>';
+  html+='<div class="footer">Sunrise Realty, Pune &middot; Confidential</div>';
+  html+='<br/><button class="no-print" onclick="window.print()" style="padding:10px 20px;background:#f59e0b;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:14px">Print / Save as PDF</button>';
+  html+='</body></html>';
+  w.document.write(html);
+  w.document.close();
+  showToast('PDF preview opened','s');
+}
+
+// ══════════════════════════════════════════════════════
+// MESSAGE MODAL
+// ══════════════════════════════════════════════════════
+function openMsg(clientName,ph,agent){
+  const waTpl=cfg.WA_Template||`Hi {name}, this is {agent} from Sunrise Realty! We'd love to help you find your dream property.`;
+  const smsTpl=cfg.SMS_Template||`Dear {name}, greetings from {agent} at Sunrise Realty!`;
+  const emTpl=cfg.Email_Template||`Dear {name},\n\nThank you for your interest in Sunrise Realty.\n\nBest regards,\n{agent}`;
+  const emSubj=cfg.Email_Subject||`Sunrise Realty — Your Dream Home`;
+  const wa=fillTpl(waTpl,clientName,ph,agent);
+  const sms=fillTpl(smsTpl,clientName,ph,agent);
+  const em=fillTpl(emTpl,clientName,ph,agent);
+  const subj=fillTpl(emSubj,clientName,ph,agent);
+  const phWA=ph.length===10?'91'+ph:ph;
+  $('mm-title').textContent='Message — '+clientName;
+  $('mm-prev').textContent=wa;
+  $('mm-wa').href=`https://wa.me/${phWA}?text=${enc(wa)}`;
+  $('mm-sms').href=`sms:${ph}?body=${enc(sms)}`;
+  $('mm-em').href=`mailto:?subject=${enc(subj)}&body=${enc(em)}`;
+  openM('m-msg');lucide.createIcons();
+}
+
+// ══════════════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════════════
+function loadSettings(){
+  $('s-ct').value=cfg.Call_Target||50;
+  $('s-bt').value=cfg.Booking_Target||2;
+  $('s-wa').value=cfg.WA_Template||'';
+  $('s-sms').value=cfg.SMS_Template||'';
+  $('s-esubj').value=cfg.Email_Subject||'';
+  $('s-email').value=cfg.Email_Template||'';
+}
+
+async function saveSettings(){
+  try {
+    const d=await apiPost({action:'updateSettings',adminUser:me(),callTarget:$('s-ct').value,bookingTarget:$('s-bt').value});
+    if(d.success){showToast('Targets saved!','s');fetchAll();}
+    else showToast('Error','e');
+  } catch { showToast('Network error','e'); }
+}
+
+async function saveTemplates(){
+  try {
+    const d=await apiPost({action:'updateSettings',adminUser:me(),
+      callTarget:$('s-ct').value,bookingTarget:$('s-bt').value,
+      waTemplate:$('s-wa').value,smsTemplate:$('s-sms').value,
+      emailSubject:$('s-esubj').value,emailTemplate:$('s-email').value});
+    if(d.success){showToast('Templates saved!','s');fetchAll();}
+    else showToast('Error','e');
+  } catch { showToast('Network error','e'); }
+}
+
+// ══════════════════════════════════════════════════════
+// EVENT DELEGATION — handles dynamically created buttons
+// ══════════════════════════════════════════════════════
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  if (action === 'followup') {
+    const rowIdx = parseInt(btn.dataset.row)||0;
+    const uname  = btn.dataset.uname||'';
+    addFollowUp(rowIdx, uname);
+  } else if (action === 'feedback') {
+    const rowIdx  = parseInt(btn.dataset.row)||0;
+    const client  = decodeURIComponent(btn.dataset.client||'');
+    const hist    = btn.dataset.hist||'%5B%5D';
+    openFeedback(rowIdx, client, hist);
+  } else if (action === 'msg') {
+    const client = decodeURIComponent(btn.dataset.client||'');
+    const ph     = btn.dataset.ph||'';
+    const agent  = decodeURIComponent(btn.dataset.agent||'');
+    openMsg(client, ph, agent);
+  }
+});
+function openM(id){$(id).classList.add('open');lucide.createIcons();}
+function closeM(id){$(id).classList.remove('open');}
+document.addEventListener('click',e=>{if(e.target.classList.contains('modal-bg'))e.target.classList.remove('open');});
+
+function setLoading(btn,loading,html){
+  btn.disabled=loading;
+  if(loading){btn.innerHTML=`<span style="width:14px;height:14px;border:2px solid rgba(0,0,0,.25);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></span>${btn.className.includes('btn-grn')||btn.className.includes('btn-ghost')?'<span style="color:inherit">'+html+'</span>':'<span>'+html+'</span>'}`;}
+  else btn.innerHTML=html;
+}
+
+function showToast(msg,type=''){
+  const el=$('toast');el.textContent=msg;el.className='on'+(type?' '+type:'');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>{el.className='';},3200);
+}
+</script>
+</body>
+</html>
