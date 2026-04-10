@@ -78,8 +78,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 @keyframes livepulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
 #sync-txt{font-size:8px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
 .nav-right{display:flex;align-items:center;gap:7px;flex-shrink:0}
-/* Profile button */
-#prof-btn{display:flex;align-items:center;gap:7px;padding:5px 10px 5px 5px;border-radius:50px;border:1px solid rgba(245,158,11,.25);background:var(--goldb);cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+/* Profile button madechanges "padding:5px 10px 5px 5px; to padding:5px 5px 5px 5px;"" */
+#prof-btn{display:flex;align-items:center;gap:7px;padding:5px 5px 5px 5px;border-radius:50px;border:1px solid rgba(245,158,11,.25);background:var(--goldb);cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
 #prof-btn:active{transform:scale(.95)}
 .p-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#000;flex-shrink:0;text-transform:uppercase}
 #prof-name{font-size:10.5px;font-weight:800;color:var(--gold);text-transform:uppercase;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -677,7 +677,7 @@ input[type=time].inp::-webkit-calendar-picker-indicator{filter:invert(.55)}
 // CONFIG — Replace with your deployed Apps Script URL
 // ══════════════════════════════════════════════════════
 const API = "https://script.google.com/macros/s/AKfycbzYWw6JYULIPlIINhJ1DfxFsB9EGM5CPLr8rbqrOfDBackFf5UNycGimOXnnLibflanWg/exec";
-const SYNC_MS      = 5000;   // 5-second auto-refresh
+const SYNC_MS      = 50000;   // 5-second auto-refresh madechanges 5000 to 50000
 const HEARTBEAT_MS = 30000;  // 30-second force-logout check
 
 // ══════════════════════════════════════════════════════
